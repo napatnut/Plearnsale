@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Daily Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0..200" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="js/config.js"></script>
+<style>
+  :root{
+    --burgundy-light:#5F142D; --burgundy-dark:#3E0B19;
+    --input-fill:rgba(120,42,64,0.55);
+    --card-bg:#FFFFFF; --sheet-bg:#F8F9FA; --coral:#FF7456;
+    --ink:#1C1C1C; --ink-soft:#8E8E93;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--sheet-bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Noto Sans Thai",sans-serif;
+    -webkit-font-smoothing:antialiased; padding-bottom:104px; }
+  .material-symbols-outlined{ font-variation-settings:'FILL' 1,'wght' 500,'GRAD' 0,'opsz' 24; font-size:18px; line-height:1; }
+
+  .hero{ background:linear-gradient(160deg,var(--burgundy-light),var(--burgundy-dark)); padding:20px 18px 46px; position:relative; overflow:hidden; }
+  .hero::after{ content:""; position:absolute; right:-60px; top:-70px; width:220px; height:220px; border-radius:50%; background:rgba(255,255,255,0.04); }
+  .hero-top{ display:flex; align-items:center; justify-content:center; position:relative; margin-bottom:16px; }
+  .hero-title{ font-size:19px; font-weight:700; color:#fff; }
+  .menu-btn{ position:absolute; right:0; width:34px; height:34px; border-radius:50%; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.16); display:flex; align-items:center; justify-content:center; color:#fff; }
+  .menu-btn .material-symbols-outlined{ font-size:20px; font-variation-settings:'FILL' 0,'wght' 600; }
+
+  /* Stepper */
+  .stepper{ display:flex; align-items:center; gap:6px; margin-bottom:16px; }
+  .step{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; }
+  .step-dot{ width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); color:rgba(255,255,255,0.7); font-size:12px; font-weight:700; }
+  .step.active .step-dot{ background:#fff; color:var(--burgundy-light); border-color:#fff; }
+  .step.done .step-dot{ background:var(--coral); color:#fff; border-color:var(--coral); }
+  .step-label{ font-size:10px; color:rgba(255,255,255,0.6); }
+  .step.active .step-label{ color:#fff; font-weight:600; }
+  .step-line{ height:1px; flex:0 0 12px; background:rgba(255,255,255,0.2); }
+
+  .eyebrow{ font-size:12px; color:rgba(255,255,255,0.6); margin-bottom:4px; }
+  .clinic-name{ font-size:22px; font-weight:700; color:#fff; margin-bottom:16px; }
+
+  .meta-row{ display:flex; gap:10px; }
+  .meta-pill{ flex:1; display:flex; align-items:center; gap:10px; background:var(--input-fill); border:1px solid rgba(255,255,255,0.14); border-radius:16px; padding:9px 12px; }
+  .meta-icon{ width:32px; height:32px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#FF9466,#FF7456); }
+  .meta-icon .material-symbols-outlined{ color:#fff; font-size:17px; font-variation-settings:'FILL' 0,'wght' 600; }
+  .meta-icon.avatar{ background:linear-gradient(135deg,#FFC59B,#F0956B); }
+  .meta-text{ flex:1; min-width:0; }
+  .meta-label{ font-size:10.5px; color:rgba(255,255,255,0.6); margin-bottom:1px; }
+  .meta-row select,.meta-row input{ width:100%; background:none; border:none; color:#fff; font-family:inherit; font-size:13.5px; font-weight:600; padding:0; }
+  .meta-row input::-webkit-calendar-picker-indicator{ filter:invert(1); opacity:0.7; }
+  .meta-row select option{ color:#1C1C1C; }
+
+  .sheet{ background:var(--sheet-bg); border-radius:26px 26px 0 0; margin-top:-28px; position:relative; z-index:2; padding:18px 14px 4px; }
+  .loading{ text-align:center; padding:40px 0; color:var(--ink-soft); font-size:13.5px; }
+  .page{ display:none; }
+  .page.active{ display:block; }
+
+  .group{ background:var(--card-bg); border-radius:20px; margin-bottom:12px; box-shadow:0 1px 3px rgba(30,10,20,0.05),0 8px 20px rgba(30,10,20,0.04); overflow:hidden; }
+  .group-head{ display:flex; align-items:center; gap:12px; padding:14px 16px; cursor:pointer; user-select:none; }
+  .icon-badge{ width:36px; height:36px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+  .icon-badge .material-symbols-outlined{ color:#fff; font-size:18px; }
+  .group-title{ flex:1; font-weight:700; font-size:15px; color:var(--ink); }
+  .group-subtotal{ font-size:13.5px; font-weight:600; font-variant-numeric:tabular-nums; color:var(--ink-soft); }
+  .group-subtotal.has{ color:var(--burgundy-light); }
+  .chevron{ width:16px; height:16px; margin-left:6px; transition:transform .2s ease; color:var(--ink-soft); flex-shrink:0; }
+  .group.open .chevron{ transform:rotate(180deg); }
+  .group-body{ display:none; padding:2px 16px 12px; }
+  .group.open .group-body{ display:block; }
+
+  .line{ display:flex; align-items:center; gap:12px; padding:9px 0; }
+  .line-icon{ width:28px; height:28px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+  .line-icon .material-symbols-outlined{ color:#fff; font-size:15px; }
+  .line-label{ font-size:13.5px; color:var(--ink); flex:1; }
+  .line-input{ display:flex; align-items:center; gap:4px; background:#EEEFF1; border-radius:11px; padding:8px 12px; width:128px; flex-shrink:0; }
+  .line-input span.baht{ font-size:12.5px; color:var(--ink-soft); }
+  .line-input input{ border:none; background:none; width:100%; text-align:right; font-family:inherit; font-size:14.5px; font-weight:600; font-variant-numeric:tabular-nums; color:var(--ink-soft); }
+  .line-input input:focus{ outline:none; }
+  .line-input.has-value{ background:#fff; border:1.5px solid var(--burgundy-light); }
+  .line-input.has-value input{ color:var(--ink); }
+  .line-input.has-value span.baht{ color:var(--burgundy-light); }
+
+  .recon-body{ padding:2px 16px 16px; }
+  .recon-row{ display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+  .recon-row .line-input{ width:150px; }
+  .recon-hint{ font-size:12px; color:var(--ink-soft); margin-bottom:10px; line-height:1.5; }
+  .recon-status{ display:flex; align-items:center; gap:6px; padding:9px 12px; border-radius:10px; font-size:12.5px; font-weight:600; }
+  .recon-status.match{ background:#E7F2ED; color:#1F7A4C; }
+  .recon-status.mismatch{ background:#FDEAE6; color:#C23A22; }
+  .recon-status.pending{ background:#F1F2F3; color:var(--ink-soft); }
+  .recon-status .material-symbols-outlined{ font-size:16px; }
+
+  .custom-row{ display:flex; align-items:center; gap:8px; padding:8px 0; }
+  .custom-row input[type="text"]{ flex:1; min-width:0; border:none; border-radius:11px; background:#EEEFF1; padding:9px 12px; font-family:inherit; font-size:13.5px; color:var(--ink); }
+  .custom-row input[type="text"]:focus{ outline:2px solid var(--burgundy-light); }
+  .custom-row .line-input{ width:112px; }
+  .custom-row .remove-btn{ width:28px; height:28px; border-radius:50%; border:none; background:#F1E4E7; color:#B23A50; display:flex; align-items:center; justify-content:center; flex-shrink:0; cursor:pointer; }
+  .custom-row .remove-btn .material-symbols-outlined{ font-size:15px; }
+  .add-custom-btn{ display:flex; align-items:center; gap:5px; width:100%; justify-content:center; border:1.5px dashed #D9C3CB; border-radius:11px; padding:10px; margin-top:6px; background:none; color:var(--burgundy-light); font-family:inherit; font-weight:600; font-size:13px; cursor:pointer; }
+
+  .note-row textarea{ width:100%; border:none; border-radius:12px; padding:11px 12px; font-family:inherit; font-size:13px; resize:none; background:#EEEFF1; margin-top:4px; }
+  .note-row textarea:focus{ outline:2px solid var(--burgundy-light); }
+
+  /* Summary page */
+  .summary-card{ background:var(--card-bg); border-radius:20px; padding:18px; margin-bottom:12px; box-shadow:0 1px 3px rgba(30,10,20,0.05),0 8px 20px rgba(30,10,20,0.04); }
+  .summary-hero{ background:linear-gradient(135deg,#5F142D,#3E0B19); color:#fff; }
+  .summary-big-label{ font-size:12px; color:rgba(255,255,255,0.7); }
+  .summary-big-value{ font-size:34px; font-weight:800; margin-top:2px; font-variant-numeric:tabular-nums; }
+  .summary-split{ display:flex; gap:10px; margin-top:14px; }
+  .summary-split .box{ flex:1; background:rgba(255,255,255,0.1); border-radius:12px; padding:10px 12px; }
+  .summary-split .box .l{ font-size:10.5px; color:rgba(255,255,255,0.65); }
+  .summary-split .box .v{ font-size:16px; font-weight:700; margin-top:2px; font-variant-numeric:tabular-nums; }
+  .sum-section-title{ font-size:12px; color:var(--ink-soft); font-weight:600; margin:0 0 10px; display:flex; align-items:center; gap:6px; }
+  .sum-section-title .material-symbols-outlined{ font-size:16px; color:var(--burgundy-light); }
+  .sum-line{ display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px dashed #ECEDEF; font-size:13.5px; }
+  .sum-line:last-child{ border-bottom:none; }
+  .sum-line .amt{ font-weight:600; font-variant-numeric:tabular-nums; color:var(--burgundy-light); }
+  .sum-line.muted .amt{ color:var(--ink-soft); }
+  .recon-badge{ display:flex; align-items:center; gap:6px; padding:10px 12px; border-radius:12px; font-size:12.5px; font-weight:600; margin-top:2px; }
+  .recon-badge.match{ background:#E7F2ED; color:#1F7A4C; }
+  .recon-badge.mismatch{ background:#FDEAE6; color:#C23A22; }
+  .recon-badge .material-symbols-outlined{ font-size:17px; }
+
+  .footer-note{ text-align:center; font-size:11.5px; color:var(--ink-soft); padding:6px 30px 18px; }
+
+  /* Bottom nav bar */
+  .tape{ position:fixed; bottom:0; left:0; right:0; background:#fff; padding:14px 16px calc(14px + env(safe-area-inset-bottom)); box-shadow:0 -6px 20px rgba(30,10,20,0.08); display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .tape-total-label{ font-size:11px; color:var(--ink-soft); margin-bottom:2px; }
+  .tape-total-value{ font-size:22px; font-weight:700; font-variant-numeric:tabular-nums; color:var(--burgundy-light); }
+  .nav-btns{ display:flex; gap:8px; flex-shrink:0; }
+  .btn{ display:flex; align-items:center; gap:6px; border:none; border-radius:13px; padding:12px 18px; font-family:inherit; font-weight:700; font-size:14px; cursor:pointer; transition:transform .12s ease,opacity .12s ease; }
+  .btn .material-symbols-outlined{ font-size:17px; font-variation-settings:'FILL' 0,'wght' 700; }
+  .btn:active{ transform:scale(0.96); }
+  .btn:disabled{ opacity:0.5; }
+  .btn-ghost{ background:#F1F2F3; color:var(--burgundy-light); }
+  .btn-primary{ background:var(--burgundy-light); color:#fff; }
+  .btn-submit{ background:var(--coral); color:#fff; box-shadow:0 6px 16px rgba(255,116,86,0.35); }
+
+  /* Popup */
+  .overlay{ position:fixed; inset:0; background:rgba(30,10,20,0.55); display:none; align-items:center; justify-content:center; z-index:100; padding:18px; }
+  .overlay.show{ display:flex; }
+  .popup{ background:#fff; border-radius:22px; width:100%; max-width:400px; overflow:hidden; max-height:92vh; display:flex; flex-direction:column; position:relative; }
+  .popup-scroll{ overflow-y:auto; }
+  /* Shareable card */
+  .share-card{ background:linear-gradient(160deg,#5F142D,#3E0B19); color:#fff; padding:24px 22px; }
+  .share-card .sc-eyebrow{ font-size:11px; color:#E4B8C4; letter-spacing:0.06em; }
+  .share-card .sc-clinic{ font-size:19px; font-weight:700; margin:2px 0 2px; }
+  .share-card .sc-date{ font-size:12.5px; color:rgba(255,255,255,0.7); margin-bottom:18px; }
+  .share-card .sc-total-label{ font-size:12px; color:rgba(255,255,255,0.7); }
+  .share-card .sc-total{ font-size:40px; font-weight:800; letter-spacing:-0.01em; font-variant-numeric:tabular-nums; line-height:1.1; }
+  .sc-split{ display:flex; gap:10px; margin:16px 0; }
+  .sc-split .box{ flex:1; background:rgba(255,255,255,0.1); border-radius:12px; padding:11px 12px; }
+  .sc-split .box .l{ font-size:10px; color:rgba(255,255,255,0.65); }
+  .sc-split .box .v{ font-size:17px; font-weight:700; margin-top:3px; font-variant-numeric:tabular-nums; }
+  .sc-breakdown{ display:flex; gap:12px; margin:4px 0 14px; }
+  .sc-bd-col{ flex:1; min-width:0; }
+  .sc-bd-title{ font-size:10.5px; color:#E4B8C4; font-weight:700; letter-spacing:0.04em; margin-bottom:6px; padding-bottom:4px; border-bottom:1px solid rgba(255,255,255,0.15); }
+  .sc-bd-line{ display:flex; justify-content:space-between; gap:6px; font-size:11px; padding:3px 0; color:rgba(255,255,255,0.9); }
+  .sc-bd-line .n{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .sc-bd-line .a{ font-weight:700; font-variant-numeric:tabular-nums; flex-shrink:0; }
+  .sc-bd-empty{ font-size:11px; color:rgba(255,255,255,0.5); padding:3px 0; }
+  .sc-month{ background:rgba(0,0,0,0.18); border-radius:14px; padding:14px; margin-top:4px; }
+  .sc-month-top{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; }
+  .sc-month-label{ font-size:11px; color:rgba(255,255,255,0.7); }
+  .sc-month-val{ font-size:15px; font-weight:700; }
+  .sc-bar-track{ height:16px; background:rgba(255,255,255,0.15); border-radius:8px; overflow:hidden; position:relative; }
+  .sc-bar-fill{ height:100%; border-radius:8px; background:linear-gradient(90deg,#FF9466,#FF7456); transition:width .8s ease; display:flex; align-items:center; justify-content:flex-end; }
+  .sc-bar-pct{ font-size:10px; font-weight:800; color:#fff; padding-right:6px; }
+  .sc-target{ font-size:10.5px; color:rgba(255,255,255,0.65); margin-top:6px; text-align:right; }
+  .popup-actions{ display:flex; gap:10px; padding:16px; border-top:1px solid #ECEDEF; }
+  .popup-actions .btn{ flex:1; justify-content:center; }
+
+  .popup-close{
+    position:absolute; top:12px; right:12px; width:34px; height:34px; border-radius:50%;
+    background:rgba(0,0,0,0.35); color:#fff; border:none; display:flex; align-items:center;
+    justify-content:center; z-index:5; cursor:pointer;
+  }
+  .popup-close .material-symbols-outlined{ font-size:18px; }
+
+  .share-btn-big{
+    width:100%; display:flex; align-items:center; justify-content:center; gap:10px;
+    background:linear-gradient(135deg,#FF9466,#FF7456); color:#fff; border:none; border-radius:16px;
+    padding:18px; font-family:inherit; font-weight:800; font-size:16px; cursor:pointer;
+    box-shadow:0 10px 24px rgba(255,116,86,0.45);
+    animation:sharePulse 2.2s ease-in-out infinite;
+    transition:transform .12s ease;
+  }
+  .share-btn-big .material-symbols-outlined{ font-size:26px; font-variation-settings:'FILL' 0,'wght' 700; }
+  .share-btn-big:active{ transform:scale(0.97); }
+  .share-btn-big:disabled{ opacity:0.6; animation:none; }
+  @keyframes sharePulse{
+    0%,100%{ box-shadow:0 10px 24px rgba(255,116,86,0.45); }
+    50%{ box-shadow:0 10px 32px rgba(255,116,86,0.7); }
+  }
+
+  /* Big success checkmark flash */
+  .check-flash-overlay{
+    position:fixed; inset:0; z-index:150; display:flex; align-items:center; justify-content:center;
+    background:rgba(30,10,20,0.4); opacity:0; pointer-events:none; transition:opacity .25s ease;
+  }
+  .check-flash-overlay.show{ opacity:1; }
+  .check-flash-card{
+    background:#fff; border-radius:26px; padding:38px 44px; display:flex; flex-direction:column;
+    align-items:center; gap:14px; box-shadow:0 20px 50px rgba(0,0,0,0.3);
+    transform:scale(0.6); transition:transform .4s cubic-bezier(.34,1.56,.64,1);
+  }
+  .check-flash-overlay.show .check-flash-card{ transform:scale(1); }
+  .check-circle-big{
+    width:88px; height:88px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(135deg,#5CB88A,#2E8B62); box-shadow:0 10px 28px rgba(46,139,98,0.45);
+  }
+  .check-circle-big .material-symbols-outlined{ font-size:50px; color:#fff; font-variation-settings:'FILL' 1,'wght' 700; }
+  .check-flash-text{ font-size:15px; font-weight:700; color:var(--ink); text-align:center; max-width:230px; line-height:1.4; }
+
+  .toast{ position:fixed; top:16px; left:50%; transform:translateX(-50%) translateY(-140%); padding:10px 18px; border-radius:9px; font-size:13px; font-weight:500; transition:transform .3s ease; z-index:120; box-shadow:0 6px 18px rgba(0,0,0,0.18); max-width:88%; text-align:center; }
+  .toast.show{ transform:translateX(-50%) translateY(0); }
+  .toast.ok{ background:var(--burgundy-dark); color:#fff; }
+  .toast.err{ background:var(--coral); color:#fff; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-top">
+    <div class="hero-title">Daily Report</div>
+    <a class="menu-btn" id="dashLink" title="แดชบอร์ด"><span class="material-symbols-outlined">bar_chart</span></a>
+  </div>
+
+  <div class="stepper">
+    <div class="step active" data-step="0">
+      <div class="step-dot">1</div><div class="step-label">หัตถการ</div>
+    </div>
+    <div class="step-line"></div>
+    <div class="step" data-step="1">
+      <div class="step-dot">2</div><div class="step-label">ช่องทางรายได้</div>
+    </div>
+    <div class="step-line"></div>
+    <div class="step" data-step="2">
+      <div class="step-dot">3</div><div class="step-label">สรุป</div>
+    </div>
+  </div>
+
+  <div class="eyebrow" id="pageEyebrow">บันทึกยอดรายวัน · หัตถการ</div>
+  <div class="clinic-name">Pearn Skin Clinic</div>
+
+  <div class="meta-row">
+    <div class="meta-pill">
+      <div class="meta-icon"><span class="material-symbols-outlined">calendar_month</span></div>
+      <div class="meta-text">
+        <div class="meta-label">วันที่</div>
+        <input type="date" id="entryDate">
+      </div>
+    </div>
+    <div class="meta-pill">
+      <div class="meta-icon avatar"><span class="material-symbols-outlined">account_circle</span></div>
+      <div class="meta-text">
+        <div class="meta-label">ผู้กรอก</div>
+        <select id="staffName"><option value="">เลือกชื่อ</option></select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sheet">
+  <!-- ===== PAGE 1: หัตถการ ===== -->
+  <div class="page active" id="page-0">
+    <div id="treatmentContainer"><div class="loading">กำลังโหลดรายการหัตถการ...</div></div>
+    <div class="group open">
+      <div class="group-head" style="cursor:default;">
+        <div class="icon-badge" style="background:linear-gradient(135deg,#6B7FA8,#3F5580)"><span class="material-symbols-outlined">playlist_add</span></div>
+        <div class="group-title">รายการอื่นๆ (พิมพ์เอง)</div>
+        <div class="group-subtotal" id="tCustomSubtotal">฿0</div>
+      </div>
+      <div class="group-body" style="display:block;">
+        <div id="tCustomRows"></div>
+        <button type="button" class="add-custom-btn" id="tAddCustom"><span class="material-symbols-outlined" style="font-size:16px;">add</span> เพิ่มรายการ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PAGE 2: ช่องทางรายได้ ===== -->
+  <div class="page" id="page-1">
+    <div id="paymentContainer"></div>
+    <div class="group open">
+      <div class="group-head" style="cursor:default;">
+        <div class="icon-badge" style="background:linear-gradient(135deg,#6B7FA8,#3F5580)"><span class="material-symbols-outlined">playlist_add</span></div>
+        <div class="group-title">ช่องทางอื่นๆ (พิมพ์เอง)</div>
+        <div class="group-subtotal" id="pCustomSubtotal">฿0</div>
+      </div>
+      <div class="group-body" style="display:block;">
+        <div id="pCustomRows"></div>
+        <button type="button" class="add-custom-btn" id="pAddCustom"><span class="material-symbols-outlined" style="font-size:16px;">add</span> เพิ่มช่องทาง</button>
+      </div>
+    </div>
+    <div class="group open">
+      <div class="group-head" style="cursor:default;">
+        <div class="icon-badge" style="background:linear-gradient(135deg,#D9694F,#B4432B)"><span class="material-symbols-outlined">functions</span></div>
+        <div class="group-title">สรุปยอดช่องทาง</div>
+      </div>
+      <div class="recon-body">
+        <div class="recon-row">
+          <div class="line-label">รวม (ยอดที่แจ้ง)<div style="font-size:11px;color:var(--ink-soft);margin-top:1px;">บวกอัตโนมัติจากทุกช่องทาง</div></div>
+          <div class="line-input has-value" style="width:150px;background:#F1F2F3;border-color:#E0E1E3;">
+            <span class="baht">฿</span>
+            <input type="text" id="declaredDisplay" value="0" readonly style="color:var(--ink);font-weight:700;">
+          </div>
+        </div>
+        <div class="recon-row">
+          <div class="line-label">ผลรวมรายวัน<div style="font-size:11px;color:var(--ink-soft);margin-top:1px;">แก้ไขได้ ถ้ายอดจริงต่างจากที่แจ้ง</div></div>
+          <div class="line-input" id="wrap_daily" style="width:150px;">
+            <span class="baht">฿</span>
+            <input type="number" inputmode="decimal" placeholder="0" id="dailyTotal">
+          </div>
+        </div>
+        <div class="note-row">
+          <textarea id="reconNote" rows="2" placeholder="หมายเหตุยอด เช่น ยอดร้านจริง 263,379 เอาเงินร้านคืนลูกค้า 1,000 บาท ค่ามัดจำ"></textarea>
+        </div>
+        <div class="recon-status pending" id="reconStatus" style="margin-top:10px;">
+          <span class="material-symbols-outlined">info</span>
+          <span id="reconText">ผลรวมรายวันเท่ากับยอดที่แจ้ง</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PAGE 3: สรุป ===== -->
+  <div class="page" id="page-2">
+    <div class="summary-card summary-hero">
+      <div class="summary-big-label">ยอดรวมวันนี้ (หัตถการ)</div>
+      <div class="summary-big-value">฿<span id="sumTreatment">0</span></div>
+      <div class="summary-split">
+        <div class="box"><div class="l">รายได้รวม (ยอดที่แจ้ง)</div><div class="v">฿<span id="sumPayment">0</span></div></div>
+        <div class="box"><div class="l">ผลรวมรายวัน</div><div class="v">฿<span id="sumDeclared">0</span></div></div>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="sum-section-title"><span class="material-symbols-outlined">vaccines</span>หัตถการวันนี้</div>
+      <div id="sumTreatmentList"></div>
+    </div>
+
+    <div class="summary-card">
+      <div class="sum-section-title"><span class="material-symbols-outlined">payments</span>ช่องทางรับชำระ</div>
+      <div id="sumPaymentList"></div>
+      <div class="recon-badge pending" id="sumReconBadge" style="display:none;"></div>
+    </div>
+
+    <div class="summary-card" id="sumNoteCard" style="display:none;">
+      <div class="sum-section-title"><span class="material-symbols-outlined">edit_note</span>หมายเหตุ</div>
+      <div id="sumNoteText" style="font-size:13.5px; color:var(--ink);"></div>
+    </div>
+  </div>
+
+  <div class="footer-note" id="footerNote">แตะหมวดหมู่เพื่อเปิด/ปิด · ยอดรวมด้านล่างอัปเดตอัตโนมัติ</div>
+</div>
+
+<!-- Bottom nav -->
+<div class="tape">
+  <div>
+    <div class="tape-total-label" id="tapeLabel">ยอดรวมวันนี้</div>
+    <div class="tape-total-value">฿<span id="tapeTotal">0</span></div>
+  </div>
+  <div class="nav-btns" id="navBtns">
+    <button class="btn btn-ghost" id="backBtn" style="display:none;"><span class="material-symbols-outlined">arrow_back</span></button>
+    <button class="btn btn-primary" id="nextBtn">ถัดไป<span class="material-symbols-outlined">arrow_forward</span></button>
+    <button class="btn btn-submit" id="submitBtn" style="display:none;"><span class="material-symbols-outlined">send</span>ส่งข้อมูล</button>
+  </div>
+</div>
+
+<!-- Big success checkmark flash -->
+<div class="check-flash-overlay" id="checkFlashOverlay">
+  <div class="check-flash-card">
+    <div class="check-circle-big"><span class="material-symbols-outlined">check</span></div>
+    <div class="check-flash-text">ส่งข้อมูลเข้า Google Sheet แล้ว</div>
+  </div>
+</div>
+
+<!-- Success popup with shareable card -->
+<div class="overlay" id="overlay">
+  <div class="popup">
+    <button class="popup-close" id="closePopup"><span class="material-symbols-outlined">close</span></button>
+    <div class="popup-scroll">
+      <div class="share-card" id="shareCard">
+        <div class="sc-eyebrow">DAILY REPORT</div>
+        <div class="sc-clinic">Pearn Skin Clinic</div>
+        <div class="sc-date" id="scDate">—</div>
+        <div class="sc-total-label">ยอดรวมวันนี้ (หัตถการ)</div>
+        <div class="sc-total">฿<span id="scTotal">0</span></div>
+        <div class="sc-split">
+          <div class="box"><div class="l">รายได้รวม (ยอดที่แจ้ง)</div><div class="v">฿<span id="scPayment">0</span></div></div>
+          <div class="box"><div class="l">ผู้กรอก</div><div class="v" id="scStaff" style="font-size:14px;">—</div></div>
+        </div>
+
+        <div class="sc-breakdown">
+          <div class="sc-bd-col">
+            <div class="sc-bd-title">หัตถการ</div>
+            <div id="scTreatmentList"></div>
+          </div>
+          <div class="sc-bd-col">
+            <div class="sc-bd-title">ช่องทางรายได้</div>
+            <div id="scPaymentList"></div>
+          </div>
+        </div>
+
+        <div class="sc-month">
+          <div class="sc-month-top">
+            <div class="sc-month-label">ยอดสะสมเดือน <span id="scMonthLabel"></span></div>
+            <div class="sc-month-val">฿<span id="scMonthTotal">0</span></div>
+          </div>
+          <div class="sc-bar-track">
+            <div class="sc-bar-fill" id="scBar" style="width:0%;"><span class="sc-bar-pct" id="scPct">0%</span></div>
+          </div>
+          <div class="sc-target" id="scTargetText">เป้า 3,000,000 บาท</div>
+        </div>
+      </div>
+    </div>
+    <div class="popup-actions">
+      <button class="share-btn-big" id="shareBtn">
+        <span class="material-symbols-outlined">ios_share</span>
+        <span>แชร์ภาพสรุป</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const ACCESS_CODE = getAccessCode();
+if (!requireAccessCode()) throw new Error('no access code');
+
+const ITEM_COLORS = [
+  "linear-gradient(135deg,#5B8FD6,#2D5A8C)","linear-gradient(135deg,#E15B7A,#B23A50)",
+  "linear-gradient(135deg,#A97BC7,#6B4590)","linear-gradient(135deg,#F0A868,#D9773B)",
+  "linear-gradient(135deg,#5CB88A,#2E8B62)"
+];
+const GROUP_COLOR = "linear-gradient(135deg,#8B2C48,#5F142D)";
+
+// ---- ช่องทางรับชำระ (ต้องตรงกับ PAYMENT_CHANNELS ใน Code.gs) ----
+const PAY_GROUPS = [
+  { name:"เงินสด / โอน", color:"linear-gradient(135deg,#5CB88A,#2E8B62)", items:[["เงินสด","payments"],["โอน","account_balance"]] },
+  { name:"บัตรเครดิต / เดบิต", color:"linear-gradient(135deg,#5B8FD6,#2D5A8C)", items:[["บัตรเครดิต","credit_card"],["Unionpay","credit_card"],["บัตร KTC","credit_card"],["บัตร UOB","credit_card"],["บัตรกรุงศรี","credit_card"]] },
+  { name:"QR / วอลเล็ต / แพลตฟอร์ม", color:"linear-gradient(135deg,#A97BC7,#6B4590)", items:[["QR code","qr_code_2"],["HD Pay","account_balance_wallet"],["Gowabi/HD mall","storefront"]] },
+  { name:"ผ่อนชำระ", color:"linear-gradient(135deg,#F0A868,#D9773B)", items:[["ผ่อน KTC","event_repeat"],["ผ่อน SCB","event_repeat"]] },
+];
+
+let TREATMENTS = [];
+let currentStep = 0;
+let tColorIdx = 0;
+
+const fmt = n => (n||0).toLocaleString('th-TH');
+
+function iconForGroup(name){
+  if (name.includes('เครื่องมือ') || name.includes('เลเซอร์') || name.toLowerCase().includes('pico')) return 'medical_services';
+  return 'vaccines';
+}
+
+// ---------- render generic value groups (treatment) ----------
+function renderTreatments(){
+  const container = document.getElementById('treatmentContainer');
+  container.innerHTML = '';
+  tColorIdx = 0;
+  TREATMENTS.forEach((group, gi) => {
+    const el = document.createElement('div');
+    el.className = 'group' + (gi === 0 ? ' open' : '');
+    const body = group.items.map(([id,label]) => {
+      const color = ITEM_COLORS[tColorIdx++ % ITEM_COLORS.length];
+      return `<div class="line">
+        <div class="line-icon" style="background:${color}"><span class="material-symbols-outlined">vaccines</span></div>
+        <div class="line-label">${label}</div>
+        <div class="line-input" id="wrap_t_${id}"><span class="baht">฿</span>
+          <input type="number" inputmode="decimal" placeholder="0" data-t="${id}" id="f_t_${id}"></div>
+      </div>`;
+    }).join('');
+    el.innerHTML = `<div class="group-head" data-toggle>
+        <div class="icon-badge" style="background:${GROUP_COLOR}"><span class="material-symbols-outlined">${iconForGroup(group.name)}</span></div>
+        <div class="group-title">${group.name}</div>
+        <div class="group-subtotal" id="tsub_${gi}">฿0</div>
+        <svg class="chevron" viewBox="0 0 20 20" fill="none"><path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div><div class="group-body">${body}</div>`;
+    container.appendChild(el);
+  });
+  bindToggles(container);
+  container.addEventListener('input', e => { if (e.target.tagName === 'INPUT') recalc(); });
+}
+
+function renderPayment(){
+  const container = document.getElementById('paymentContainer');
+  container.innerHTML = '';
+  PAY_GROUPS.forEach((group, gi) => {
+    const el = document.createElement('div');
+    el.className = 'group' + (gi === 0 ? ' open' : '');
+    const body = group.items.map(([label,icon]) => `<div class="line">
+        <div class="line-icon" style="background:${group.color}"><span class="material-symbols-outlined">${icon}</span></div>
+        <div class="line-label">${label}</div>
+        <div class="line-input" id="wrap_p_${label}"><span class="baht">฿</span>
+          <input type="number" inputmode="decimal" placeholder="0" data-p="${label}" id="f_p_${label}"></div>
+      </div>`).join('');
+    el.innerHTML = `<div class="group-head" data-toggle>
+        <div class="icon-badge" style="background:${group.color}"><span class="material-symbols-outlined">${group.items[0][1]}</span></div>
+        <div class="group-title">${group.name}</div>
+        <div class="group-subtotal" id="psub_${gi}">฿0</div>
+        <svg class="chevron" viewBox="0 0 20 20" fill="none"><path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div><div class="group-body">${body}</div>`;
+    container.appendChild(el);
+  });
+  bindToggles(container);
+  container.addEventListener('input', e => { if (e.target.tagName === 'INPUT') recalc(); });
+}
+
+function bindToggles(container){
+  container.addEventListener('click', e => {
+    const head = e.target.closest('.group-head[data-toggle]');
+    if (head) head.closest('.group').classList.toggle('open');
+  });
+}
+
+// ---------- custom rows (shared logic) ----------
+function makeCustomManager(containerId, subtotalId, addBtnId, placeholder){
+  let rows = [];
+  let seq = 0;
+  const container = document.getElementById(containerId);
+  function render(){
+    container.innerHTML = rows.map(r => `<div class="custom-row">
+      <input type="text" placeholder="${placeholder}" value="${r.label}" data-role="label" data-row="${r.rowId}">
+      <div class="line-input"><span class="baht">฿</span>
+        <input type="number" inputmode="decimal" placeholder="0" value="${r.amount||''}" data-role="amount" data-row="${r.rowId}"></div>
+      <button type="button" class="remove-btn" data-remove="${r.rowId}"><span class="material-symbols-outlined">close</span></button>
+    </div>`).join('');
+  }
+  function add(){ seq++; rows.push({rowId:'c'+seq,label:'',amount:0}); render(); }
+  container.addEventListener('input', e => {
+    const row = rows.find(r => r.rowId === e.target.dataset.row);
+    if (!row) return;
+    if (e.target.dataset.role === 'label') row.label = e.target.value;
+    if (e.target.dataset.role === 'amount') row.amount = parseFloat(e.target.value)||0;
+    recalc();
+  });
+  container.addEventListener('click', e => {
+    const btn = e.target.closest('[data-remove]');
+    if (btn){ rows = rows.filter(r => r.rowId !== btn.dataset.remove); render(); recalc(); }
+  });
+  document.getElementById(addBtnId).addEventListener('click', add);
+  add();
+  return {
+    subtotal: () => rows.reduce((s,r)=>s+(r.amount||0),0),
+    items: () => rows.filter(r=>r.label.trim()!==''&&r.amount>0).map(r=>({label:r.label.trim(),amount:r.amount})),
+    subtotalEl: document.getElementById(subtotalId)
+  };
+}
+
+let tCustom, pCustom;
+
+// ---------- totals ----------
+function treatmentTotal(){
+  let sum = 0;
+  TREATMENTS.forEach((group, gi) => {
+    let sub = 0;
+    group.items.forEach(([id]) => {
+      const v = parseFloat(document.getElementById(`f_t_${id}`).value)||0;
+      sub += v;
+      document.getElementById(`wrap_t_${id}`).classList.toggle('has-value', v>0);
+    });
+    sum += sub;
+    const el = document.getElementById(`tsub_${gi}`);
+    if (el){ el.textContent = '฿'+fmt(sub); el.classList.toggle('has', sub>0); }
+  });
+  const c = tCustom ? tCustom.subtotal() : 0;
+  if (tCustom){ tCustom.subtotalEl.textContent = '฿'+fmt(c); tCustom.subtotalEl.classList.toggle('has', c>0); }
+  return sum + c;
+}
+function paymentTotal(){
+  let sum = 0;
+  PAY_GROUPS.forEach((group, gi) => {
+    let sub = 0;
+    group.items.forEach(([label]) => {
+      const v = parseFloat(document.getElementById(`f_p_${label}`).value)||0;
+      sub += v;
+      document.getElementById(`wrap_p_${label}`).classList.toggle('has-value', v>0);
+    });
+    sum += sub;
+    const el = document.getElementById(`psub_${gi}`);
+    if (el){ el.textContent = '฿'+fmt(sub); el.classList.toggle('has', sub>0); }
+  });
+  const c = pCustom ? pCustom.subtotal() : 0;
+  if (pCustom){ pCustom.subtotalEl.textContent = '฿'+fmt(c); pCustom.subtotalEl.classList.toggle('has', c>0); }
+  return sum + c;
+}
+
+let dailyTotalTouched = false; // พนักงานแก้ผลรวมรายวันเองหรือยัง
+
+function recalc(){
+  const tTot = treatmentTotal();
+  const pTot = paymentTotal();
+  updateRecon(pTot);
+  if (currentStep === 0){ document.getElementById('tapeLabel').textContent = 'ยอดรวมหัตถการ'; document.getElementById('tapeTotal').textContent = fmt(tTot); }
+  else if (currentStep === 1){ document.getElementById('tapeLabel').textContent = 'ยอดรวมช่องทาง'; document.getElementById('tapeTotal').textContent = fmt(pTot); }
+  else { document.getElementById('tapeLabel').textContent = 'ยอดรวมวันนี้'; document.getElementById('tapeTotal').textContent = fmt(tTot); }
+  return { tTot, pTot };
+}
+
+function currentDailyTotal(){
+  const el = document.getElementById('dailyTotal');
+  if (dailyTotalTouched && el.value !== '') return parseFloat(el.value)||0;
+  return paymentTotal(); // ดีฟอลต์ = ยอดที่แจ้ง
+}
+
+function updateRecon(declared){
+  // ยอดที่แจ้ง = ผลบวกทุกช่องทาง (แสดงอย่างเดียว)
+  document.getElementById('declaredDisplay').value = fmt(declared);
+
+  // ผลรวมรายวัน: ถ้ายังไม่แตะ ให้ตามยอดที่แจ้ง
+  const dailyEl = document.getElementById('dailyTotal');
+  if (!dailyTotalTouched){ dailyEl.placeholder = fmt(declared); }
+  document.getElementById('wrap_daily').classList.toggle('has-value', dailyTotalTouched && dailyEl.value !== '');
+
+  const daily = currentDailyTotal();
+  const diff = daily - declared;
+  const statusEl = document.getElementById('reconStatus');
+  if (!dailyTotalTouched || diff === 0){
+    statusEl.className = 'recon-status match';
+    statusEl.innerHTML = '<span class="material-symbols-outlined">check_circle</span><span>ผลรวมรายวัน ฿'+fmt(daily)+' เท่ากับยอดที่แจ้ง</span>';
+  } else {
+    statusEl.className = 'recon-status mismatch';
+    const word = diff > 0 ? 'มากกว่า' : 'น้อยกว่า';
+    statusEl.innerHTML = '<span class="material-symbols-outlined">error</span><span>ผลรวมรายวัน'+word+'ยอดที่แจ้ง ฿'+fmt(Math.abs(diff))+' · อย่าลืมใส่หมายเหตุ</span>';
+  }
+}
+document.getElementById('dailyTotal').addEventListener('input', () => { dailyTotalTouched = true; recalc(); });
+
+// ---------- stepper navigation ----------
+const EYEBROWS = ['บันทึกยอดรายวัน · หัตถการ','บันทึกยอดรายวัน · ช่องทางรายได้','บันทึกยอดรายวัน · สรุปทั้งหมด'];
+function goToStep(step){
+  if (step < 0 || step > 2) return;
+  // validate meta before leaving step 0
+  currentStep = step;
+  document.querySelectorAll('.page').forEach((p,i) => p.classList.toggle('active', i === step));
+  document.querySelectorAll('.step').forEach((s,i) => {
+    s.classList.toggle('active', i === step);
+    s.classList.toggle('done', i < step);
+  });
+  document.getElementById('pageEyebrow').textContent = EYEBROWS[step];
+  document.getElementById('backBtn').style.display = step === 0 ? 'none' : 'flex';
+  document.getElementById('nextBtn').style.display = step === 2 ? 'none' : 'flex';
+  document.getElementById('submitBtn').style.display = step === 2 ? 'flex' : 'none';
+  document.getElementById('footerNote').style.display = step === 2 ? 'none' : 'block';
+  if (step === 2) buildSummary();
+  recalc();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+document.getElementById('nextBtn').addEventListener('click', () => {
+  if (currentStep === 0){
+    if (!document.getElementById('entryDate').value){ showToast('กรุณาเลือกวันที่', false); return; }
+    if (!document.getElementById('staffName').value){ showToast('กรุณาเลือกชื่อผู้กรอก', false); return; }
+  }
+  goToStep(currentStep + 1);
+});
+document.getElementById('backBtn').addEventListener('click', () => goToStep(currentStep - 1));
+document.querySelectorAll('.step').forEach(s => s.addEventListener('click', () => {
+  const target = parseInt(s.dataset.step);
+  if (target <= currentStep || (document.getElementById('entryDate').value && document.getElementById('staffName').value)) goToStep(target);
+}));
+
+// ---------- build summary page ----------
+function collectData(){
+  const treatmentValues = {};
+  TREATMENTS.forEach(g => g.items.forEach(([id]) => {
+    treatmentValues[id] = parseFloat(document.getElementById(`f_t_${id}`).value)||0;
+  }));
+  const paymentValues = {};
+  PAY_GROUPS.forEach(g => g.items.forEach(([label]) => {
+    paymentValues[label] = parseFloat(document.getElementById(`f_p_${label}`).value)||0;
+  }));
+  return {
+    date: document.getElementById('entryDate').value,
+    staff: document.getElementById('staffName').value,
+    note: document.getElementById('noteField') ? document.getElementById('noteField').value : '',
+    treatmentValues, treatmentCustom: tCustom.items(),
+    paymentValues, paymentCustom: pCustom.items(),
+    dailyTotal: currentDailyTotal(),
+    reconNote: document.getElementById('reconNote').value
+  };
+}
+
+function buildSummary(){
+  const { tTot, pTot } = recalc();
+  const d = collectData();
+  const daily = currentDailyTotal();
+  document.getElementById('sumTreatment').textContent = fmt(tTot);
+  document.getElementById('sumPayment').textContent = fmt(pTot);       // ยอดที่แจ้ง = ผลบวกช่องทาง
+  document.getElementById('sumDeclared').textContent = fmt(daily);     // ผลรวมรายวัน (แก้ได้)
+
+  // treatment list
+  const tItems = [];
+  TREATMENTS.forEach(g => g.items.forEach(([id,label]) => {
+    const v = parseFloat(document.getElementById(`f_t_${id}`).value)||0;
+    if (v>0) tItems.push({label, amount:v});
+  }));
+  tCustom.items().forEach(i => tItems.push(i));
+  const tList = document.getElementById('sumTreatmentList');
+  tList.innerHTML = tItems.length ? tItems.sort((a,b)=>b.amount-a.amount).map(i =>
+    `<div class="sum-line"><span>${i.label}</span><span class="amt">฿${fmt(i.amount)}</span></div>`).join('')
+    : '<div class="sum-line muted"><span>ยังไม่มีข้อมูล</span><span class="amt">฿0</span></div>';
+
+  // payment list
+  const pItems = [];
+  PAY_GROUPS.forEach(g => g.items.forEach(([label]) => {
+    const v = parseFloat(document.getElementById(`f_p_${label}`).value)||0;
+    if (v>0) pItems.push({label, amount:v});
+  }));
+  pCustom.items().forEach(i => pItems.push(i));
+  const pList = document.getElementById('sumPaymentList');
+  pList.innerHTML = pItems.length ? pItems.sort((a,b)=>b.amount-a.amount).map(i =>
+    `<div class="sum-line"><span>${i.label}</span><span class="amt">฿${fmt(i.amount)}</span></div>`).join('')
+    : '<div class="sum-line muted"><span>ยังไม่มีข้อมูล</span><span class="amt">฿0</span></div>';
+
+  // recon badge: เทียบผลรวมรายวัน vs ยอดที่แจ้ง
+  const badge = document.getElementById('sumReconBadge');
+  const diff = daily - pTot;
+  if (diff !== 0){
+    badge.style.display = 'flex';
+    badge.className = 'recon-badge mismatch';
+    const word = diff > 0 ? 'มากกว่า' : 'น้อยกว่า';
+    const noteTxt = d.reconNote && d.reconNote.trim() ? ' · ' + d.reconNote.trim() : '';
+    badge.innerHTML = '<span class="material-symbols-outlined">error</span>ผลรวมรายวัน'+word+'ยอดที่แจ้ง ฿'+fmt(Math.abs(diff))+noteTxt;
+  } else {
+    badge.style.display = 'flex';
+    badge.className = 'recon-badge match';
+    badge.innerHTML = '<span class="material-symbols-outlined">check_circle</span>ผลรวมรายวันตรงกับยอดที่แจ้ง';
+  }
+
+  // note
+  if (d.note && d.note.trim()){
+    document.getElementById('sumNoteCard').style.display = 'block';
+    document.getElementById('sumNoteText').textContent = d.note;
+  } else document.getElementById('sumNoteCard').style.display = 'none';
+}
+
+// ---------- submit ----------
+function showToast(msg, ok){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (ok?'ok':'err');
+  setTimeout(() => { t.className = 'toast ' + (ok?'ok':'err'); }, 2800);
+}
+
+// ---------- big checkmark flash before showing the summary popup ----------
+function flashCheck(onDone){
+  const el = document.getElementById('checkFlashOverlay');
+  el.classList.add('show');
+  setTimeout(() => {
+    el.classList.remove('show');
+    setTimeout(onDone, 280);
+  }, 1300);
+}
+
+document.getElementById('submitBtn').addEventListener('click', () => {
+  const d = collectData();
+  if (!d.date){ showToast('กรุณาเลือกวันที่', false); return; }
+  if (!d.staff){ showToast('กรุณาเลือกชื่อผู้กรอก', false); return; }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="material-symbols-outlined">hourglass_top</span>กำลังส่ง...';
+
+  const payload = Object.assign({ code: ACCESS_CODE }, d);
+
+  apiCall('submitReport', payload)
+    .then(res => {
+      btn.disabled = false;
+      btn.innerHTML = '<span class="material-symbols-outlined">send</span>ส่งข้อมูล';
+      if (res.success) flashCheck(() => openSuccessPopup(res, d));
+      else showToast('ส่งไม่สำเร็จ: ' + res.error, false);
+    })
+    .catch(err => {
+      btn.disabled = false;
+      btn.innerHTML = '<span class="material-symbols-outlined">send</span>ส่งข้อมูล';
+      showToast('เกิดข้อผิดพลาด: ' + err.message, false);
+    });
+});
+
+// ---------- success popup ----------
+function openSuccessPopup(res, d){
+  const dateLabel = new Date(d.date).toLocaleDateString('th-TH', { day:'numeric', month:'long', year:'numeric' });
+  document.getElementById('scDate').textContent = dateLabel;
+  document.getElementById('scTotal').textContent = fmt(res.treatmentTotal);
+  document.getElementById('scPayment').textContent = fmt(res.declaredTotal !== undefined ? res.declaredTotal : res.paymentTotal);
+  document.getElementById('scStaff').textContent = d.staff;
+  document.getElementById('scMonthTotal').textContent = fmt(res.monthTotal);
+
+  // รายการหัตถการ (เรียงมาก→น้อย) สำหรับภาพแชร์
+  const tItems = [];
+  TREATMENTS.forEach(g => g.items.forEach(([id,label]) => {
+    const v = parseFloat(document.getElementById(`f_t_${id}`).value)||0;
+    if (v>0) tItems.push({label, amount:v});
+  }));
+  tCustom.items().forEach(i => tItems.push(i));
+  tItems.sort((a,b)=>b.amount-a.amount);
+  document.getElementById('scTreatmentList').innerHTML = tItems.length
+    ? tItems.map(i => `<div class="sc-bd-line"><span class="n">${i.label}</span><span class="a">${fmt(i.amount)}</span></div>`).join('')
+    : '<div class="sc-bd-empty">—</div>';
+
+  // ช่องทางรายได้
+  const pItems = [];
+  PAY_GROUPS.forEach(g => g.items.forEach(([label]) => {
+    const v = parseFloat(document.getElementById(`f_p_${label}`).value)||0;
+    if (v>0) pItems.push({label, amount:v});
+  }));
+  pCustom.items().forEach(i => pItems.push(i));
+  pItems.sort((a,b)=>b.amount-a.amount);
+  document.getElementById('scPaymentList').innerHTML = pItems.length
+    ? pItems.map(i => `<div class="sc-bd-line"><span class="n">${i.label}</span><span class="a">${fmt(i.amount)}</span></div>`).join('')
+    : '<div class="sc-bd-empty">—</div>';
+
+  const pct = res.percent || 0;
+  const barPct = (res.barPercent !== undefined && res.barPercent !== null) ? res.barPercent : Math.min(100, pct);
+  document.getElementById('scPct').textContent = pct + '%';
+  document.getElementById('scMonthLabel').textContent = '';
+  const over = Math.max(0, (res.monthTotal||0) - (res.target||0));
+  if (over > 0) {
+    document.getElementById('scTargetText').textContent = '🎉 ทะลุเป้า ' + fmt(res.target) + ' แล้ว! เกิน ฿' + fmt(over) + (res.nextMilestoneLabel ? ' · เป้าถัดไป ' + res.nextMilestoneLabel : '');
+  } else {
+    document.getElementById('scTargetText').textContent = 'เป้า ' + fmt(res.target) + ' บาท · เหลืออีก ฿' + fmt((res.target||0)-(res.monthTotal||0));
+  }
+  setTimeout(() => { document.getElementById('scBar').style.width = Math.max(3, Math.min(100, barPct)) + '%'; }, 100);
+  document.getElementById('overlay').classList.add('show');
+}
+document.getElementById('closePopup').addEventListener('click', () => {
+  document.getElementById('overlay').classList.remove('show');
+});
+
+// ---------- share as image ----------
+document.getElementById('shareBtn').addEventListener('click', async () => {
+  const card = document.getElementById('shareCard');
+  const shareBtn = document.getElementById('shareBtn');
+  shareBtn.disabled = true;
+  try {
+    if (typeof html2canvas === 'undefined') {
+      throw new Error('โหลดไลบรารีสร้างภาพไม่สำเร็จ ลองเปิดหน้านี้ในเบราว์เซอร์จริง (ไม่ใช่หน้าต่างพรีวิว) แล้วลองใหม่');
+    }
+    if (document.fonts && document.fonts.ready) { await document.fonts.ready; }
+    const canvas = await html2canvas(card, { scale: 2, backgroundColor: null, useCORS: true, allowTaint: true });
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+    const file = new File([blob], 'daily-report.png', { type: 'image/png' });
+
+    let shared = false;
+    if (navigator.share) {
+      try {
+        await navigator.share({ files: [file], title: 'สรุปยอดวันนี้ - Pearn Skin Clinic' });
+        shared = true;
+      } catch (shareErr) {
+        if (shareErr.name === 'AbortError') { shareBtn.disabled = false; return; } // ผู้ใช้กดยกเลิกเอง ไม่ต้องแจ้งเตือน
+        // เบราว์เซอร์รองรับ share() แต่ส่งไฟล์ภาพไม่ได้ → ใช้ fallback ดาวน์โหลดแทน
+      }
+    }
+    if (!shared) {
+      // fallback: ดาวน์โหลดภาพ (เกิดขึ้นเมื่อเบราว์เซอร์ไม่รองรับ Web Share API หรือเปิดผ่าน file:// แทน https)
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'daily-report.png'; a.click();
+      URL.revokeObjectURL(url);
+      showToast(navigator.share ? 'บันทึกภาพสรุปแล้ว (เบราว์เซอร์นี้แชร์ไฟล์ตรงไม่ได้)' : 'บันทึกภาพสรุปแล้ว — เปิดผ่านลิงก์ https จริงเพื่อแชร์เข้า LINE ได้ทันที', true);
+    }
+  } catch (err) {
+    showToast('สร้างภาพไม่สำเร็จ: ' + err.message, false);
+  }
+  shareBtn.disabled = false;
+});
+
+// ---------- init ----------
+document.getElementById('dashLink').href = 'dashboard.html?code=' + encodeURIComponent(ACCESS_CODE);
+document.getElementById('entryDate').valueAsDate = new Date();
+tCustom = makeCustomManager('tCustomRows', 'tCustomSubtotal', 'tAddCustom', 'ชื่อรายการ');
+pCustom = makeCustomManager('pCustomRows', 'pCustomSubtotal', 'pAddCustom', 'ชื่อช่องทาง');
+renderPayment();
+
+apiCall('getFormInit')
+  .then(res => {
+    if (!res.success) throw new Error(res.error);
+    TREATMENTS = res.treatments;
+    renderTreatments();
+    const sel = document.getElementById('staffName');
+    (res.staff||[]).forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.name; opt.textContent = s.name; sel.appendChild(opt);
+    });
+    recalc();
+  })
+  .catch(err => {
+    document.getElementById('treatmentContainer').innerHTML = '<div class="loading">โหลดข้อมูลไม่สำเร็จ: '+err.message+'</div>';
+  });
+</script>
+</body>
+</html>

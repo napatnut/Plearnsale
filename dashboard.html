@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>แดชบอร์ดยอดขาย</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0..200" rel="stylesheet">
+<script src="js/config.js"></script>
+<style>
+  :root{
+    --burgundy-light:#5F142D; --burgundy-dark:#3E0B19;
+    --card-bg:#FFFFFF; --sheet-bg:#F8F9FA; --coral:#FF7456;
+    --ink:#1C1C1C; --ink-soft:#8E8E93; --green:#2E8B62;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--sheet-bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Noto Sans Thai",sans-serif;
+    -webkit-font-smoothing:antialiased; padding-bottom:30px; }
+  .material-symbols-outlined{ font-variation-settings:'FILL' 1,'wght' 500; font-size:18px; line-height:1; }
+
+  .hero{ background:linear-gradient(160deg,var(--burgundy-light),var(--burgundy-dark)); padding:20px 18px 22px; color:#fff; }
+  .hero-top{ display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+  .hero-title{ font-size:19px; font-weight:700; }
+  .month-pill{ font-size:12px; background:rgba(255,255,255,0.14); padding:5px 12px; border-radius:20px; }
+  .eyebrow{ font-size:12px; color:rgba(255,255,255,0.6); }
+
+  main{ padding:16px 14px; max-width:640px; margin:0 auto; }
+  .loading{ text-align:center; padding:50px 0; color:var(--ink-soft); }
+
+  /* Power bar */
+  .power-card{ background:linear-gradient(135deg,#5F142D,#3E0B19); border-radius:22px; padding:20px; color:#fff; margin-bottom:14px; position:relative; overflow:hidden; }
+  .power-card::after{ content:""; position:absolute; right:-40px; top:-50px; width:160px; height:160px; border-radius:50%; background:rgba(255,255,255,0.05); }
+  .power-label{ font-size:12px; color:rgba(255,255,255,0.7); }
+  .power-value{ font-size:38px; font-weight:800; margin:2px 0 2px; font-variant-numeric:tabular-nums; }
+  .power-target{ font-size:12.5px; color:rgba(255,255,255,0.65); margin-bottom:16px; }
+  .power-bar-outer{ height:26px; background:rgba(0,0,0,0.25); border-radius:13px; overflow:hidden; position:relative; box-shadow:inset 0 1px 3px rgba(0,0,0,0.3); }
+  .power-bar-inner{ height:100%; border-radius:13px; background:linear-gradient(90deg,#FF7456,#FF9466); width:0%; transition:width 1.2s cubic-bezier(.2,.8,.2,1); display:flex; align-items:center; justify-content:flex-end; box-shadow:0 0 16px rgba(255,116,86,0.5); position:relative; }
+  .power-bar-inner.reached{ background:linear-gradient(90deg,#2E8B62,#5CB88A); box-shadow:0 0 16px rgba(46,139,98,0.5); }
+  .power-bar-inner.gold{ background:linear-gradient(90deg,#C9962E,#F0C75E); box-shadow:0 0 18px rgba(230,180,70,0.65); }
+  .power-pct{ font-size:12px; font-weight:800; padding-right:10px; text-shadow:0 1px 2px rgba(0,0,0,0.3); }
+  .power-ticks{ display:flex; justify-content:space-between; margin-top:6px; font-size:9.5px; color:rgba(255,255,255,0.5); }
+  .power-status{ display:flex; align-items:center; gap:6px; margin-top:14px; font-size:13px; font-weight:600; padding:10px 14px; border-radius:12px; }
+  .power-status.on{ background:rgba(92,184,138,0.22); color:#9FE3BE; }
+  .power-status.off{ background:rgba(255,116,86,0.2); color:#FFB59F; }
+
+  .stat-row{ display:flex; gap:10px; margin-bottom:14px; }
+  .stat-card{ flex:1; background:var(--card-bg); border-radius:16px; padding:14px; box-shadow:0 1px 3px rgba(30,10,20,0.05); }
+  .stat-label{ font-size:11px; color:var(--ink-soft); margin-bottom:4px; display:flex; align-items:center; gap:4px; }
+  .stat-label .material-symbols-outlined{ font-size:14px; }
+  .stat-value{ font-size:19px; font-weight:800; font-variant-numeric:tabular-nums; }
+  .stat-value.sm{ font-size:15px; }
+
+  .card{ background:var(--card-bg); border-radius:18px; padding:16px; margin-bottom:14px; box-shadow:0 1px 3px rgba(30,10,20,0.05); }
+  .card h2{ font-size:14.5px; font-weight:700; margin:0 0 14px; display:flex; align-items:center; gap:6px; }
+  .card h2 .material-symbols-outlined{ font-size:18px; color:var(--burgundy-light); }
+
+  /* Daily bar chart */
+  .chart{ display:flex; align-items:flex-end; gap:4px; height:130px; padding-top:8px; }
+  .bar-col{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0; }
+  .bar{ width:100%; max-width:22px; border-radius:5px 5px 0 0; background:linear-gradient(180deg,#8B2C48,#5F142D); transition:height .6s ease; min-height:2px; }
+  .bar.today{ background:linear-gradient(180deg,#FF9466,#FF7456); }
+  .bar-day{ font-size:8.5px; color:var(--ink-soft); white-space:nowrap; }
+
+  /* Channel breakdown */
+  .ch-row{ display:flex; align-items:center; gap:10px; padding:8px 0; }
+  .ch-name{ font-size:13px; flex:0 0 120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ch-track{ flex:1; height:8px; background:#EEEFF1; border-radius:4px; overflow:hidden; }
+  .ch-fill{ height:100%; border-radius:4px; background:linear-gradient(90deg,#8B2C48,#5F142D); }
+  .ch-amt{ font-size:12px; font-weight:600; font-variant-numeric:tabular-nums; flex:0 0 auto; color:var(--burgundy-light); }
+
+  .refresh-btn{ display:flex; align-items:center; gap:6px; margin:0 auto 8px; background:var(--card-bg); border:1px solid #ECEDEF; border-radius:20px; padding:8px 16px; font-family:inherit; font-size:12.5px; font-weight:600; color:var(--burgundy-light); cursor:pointer; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-top">
+    <div class="hero-title">แดชบอร์ดยอดขาย</div>
+    <a class="month-pill" id="backToForm" style="text-decoration:none;color:#fff;display:flex;align-items:center;gap:4px;"><span class="material-symbols-outlined" style="font-size:15px;">edit_document</span>กรอกยอด</a>
+  </div>
+  <div class="eyebrow" style="margin-top:6px;">Pearn Skin Clinic · มอนิเตอร์รายเดือน · <span id="monthPill">—</span></div>
+</div>
+
+<main>
+  <div id="content"><div class="loading">กำลังโหลดข้อมูล...</div></div>
+</main>
+
+<script>
+const ACCESS_CODE = getAccessCode();
+if (!requireAccessCode()) throw new Error('no access code');
+const fmt = n => (n||0).toLocaleString('th-TH');
+
+function render(data){
+  const m = data.monthly;
+  const reached = m.baseReached || m.percent >= 100;
+  const mm = v => (v / 1000000) + 'M';
+  const tickLeft = reached && m.barBase ? mm(m.barBase) : '0';
+  const tickMid = reached ? '' : '1.5M';
+  const tickRight = reached && m.barTarget ? mm(m.barTarget) : '3M';
+  const nextTxt = m.nextMilestoneLabel ? ' · เป้าถัดไป ' + m.nextMilestoneLabel + ' เหลือ ฿' + fmt(m.toNextMilestone) : '';
+  const content = document.getElementById('content');
+  document.getElementById('monthPill').textContent = m.monthLabel;
+
+  // channel breakdown
+  const channels = Object.entries(data.channelTotals || {}).sort((a,b)=>b[1]-a[1]);
+  const maxCh = channels.length ? channels[0][1] : 1;
+  const channelHtml = channels.length ? channels.map(([name,amt]) => `
+    <div class="ch-row">
+      <div class="ch-name">${name}</div>
+      <div class="ch-track"><div class="ch-fill" style="width:${Math.round(amt/maxCh*100)}%"></div></div>
+      <div class="ch-amt">฿${fmt(amt)}</div>
+    </div>`).join('') : '<div style="color:var(--ink-soft);font-size:13px;text-align:center;padding:10px;">ยังไม่มีข้อมูลช่องทางเดือนนี้</div>';
+
+  // daily chart
+  const daily = m.daily || [];
+  const maxDay = daily.length ? Math.max(...daily.map(d=>d.total)) : 1;
+  const chartHtml = daily.length ? daily.map((d,i) => {
+    const isToday = i === daily.length - 1;
+    return `<div class="bar-col">
+      <div class="bar ${isToday?'today':''}" style="height:${Math.max(2, Math.round(d.total/maxDay*110))}px" title="${d.date}: ฿${fmt(d.total)}"></div>
+      <div class="bar-day">${d.date}</div>
+    </div>`;
+  }).join('') : '<div style="color:var(--ink-soft);font-size:13px;width:100%;text-align:center;">ยังไม่มีข้อมูลรายวัน</div>';
+
+  const avgPerDay = m.dayCount > 0 ? Math.round(m.monthTotal / m.dayCount) : 0;
+
+  content.innerHTML = `
+    <button class="refresh-btn" id="refreshBtn"><span class="material-symbols-outlined" style="font-size:15px;">refresh</span>รีเฟรชข้อมูล</button>
+
+    <div class="power-card">
+      <div class="power-label">ยอดขายสะสมเดือนนี้</div>
+      <div class="power-value">฿${fmt(m.monthTotal)}</div>
+      <div class="power-target">เป้าหมาย ฿${fmt(m.target)} · ${reached ? 'ทะลุเป้าแล้ว! 🎉 เกิน ฿'+fmt(m.overBase||0)+nextTxt : 'เหลืออีก ฿'+fmt(m.remaining)}</div>
+      <div class="power-bar-outer">
+        <div class="power-bar-inner ${reached?'gold':''}" id="powerBar"><span class="power-pct">${m.percent}%</span></div>
+      </div>
+      <div class="power-ticks"><span>${tickLeft}</span><span>${tickMid}</span><span>${tickRight}</span></div>
+      <div class="power-status ${m.onTrack?'on':'off'}">
+        <span class="material-symbols-outlined" style="font-size:17px;">${m.onTrack?'trending_up':'warning'}</span>
+        ${m.onTrack
+          ? 'เป็นไปตามเป้า (ควรได้ ฿'+fmt(m.expectedPace)+' ณ วันนี้)'
+          : 'ต่ำกว่าเป้า ควรได้ ฿'+fmt(m.expectedPace)+' แล้ว · เหลือ '+m.daysLeft+' วัน'}
+      </div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="stat-label"><span class="material-symbols-outlined">calendar_today</span>บันทึกแล้ว</div>
+        <div class="stat-value">${m.dayCount}<span style="font-size:12px;font-weight:500;color:var(--ink-soft);"> วัน</span></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><span class="material-symbols-outlined">bar_chart</span>เฉลี่ย/วัน</div>
+        <div class="stat-value sm">฿${fmt(avgPerDay)}</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="material-symbols-outlined">insights</span>ยอดขายรายวัน</h2>
+      <div class="chart">${chartHtml}</div>
+    </div>
+
+    <div class="card">
+      <h2><span class="material-symbols-outlined">account_balance_wallet</span>ยอดตามช่องทางรับชำระ (เดือนนี้)</h2>
+      ${channelHtml}
+    </div>
+  `;
+
+  setTimeout(() => {
+    const w = (m.barPercent !== undefined && m.barPercent !== null) ? m.barPercent : m.percent;
+    document.getElementById('powerBar').style.width = Math.max(3, Math.min(100, w)) + '%';
+  }, 150);
+  document.getElementById('refreshBtn').addEventListener('click', load);
+}
+
+function load(){
+  document.getElementById('backToForm').href = 'index.html?code=' + encodeURIComponent(ACCESS_CODE);
+  document.getElementById('content').innerHTML = '<div class="loading">กำลังโหลดข้อมูล...</div>';
+  apiCall('getDashboard', { date: null })
+    .then(res => {
+      if (!res.success) throw new Error(res.error);
+      render(res);
+    })
+    .catch(err => {
+      document.getElementById('content').innerHTML = '<div class="loading">โหลดไม่สำเร็จ: '+err.message+'</div>';
+    });
+}
+
+load();
+</script>
+</body>
+</html>

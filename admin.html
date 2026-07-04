@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>จัดการระบบ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0..200" rel="stylesheet">
+<script src="js/config.js"></script>
+<style>
+  :root{
+    --burgundy-light: #5F142D; --burgundy-dark: #3E0B19;
+    --card-bg: #FFFFFF; --sheet-bg: #F8F9FA; --coral: #FF7456;
+    --ink: #1C1C1C; --ink-soft: #8E8E93; --line: #ECEDEF;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--sheet-bg); color:var(--ink);
+    font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Noto Sans Thai", sans-serif;
+    -webkit-font-smoothing:antialiased; padding-bottom:40px;
+  }
+  .material-symbols-outlined{ font-variation-settings:'FILL' 0,'wght' 500,'GRAD' 0,'opsz' 24; font-size:18px; line-height:1; }
+
+  header{ background:linear-gradient(160deg, var(--burgundy-light), var(--burgundy-dark)); color:#fff; padding:22px 20px 22px; }
+  .eyebrow{ font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(255,255,255,0.6); margin-bottom:6px; }
+  h1{ font-size:20px; font-weight:700; margin:0; }
+
+  main{ padding:16px 14px; max-width:560px; margin:0 auto; }
+  .loading{ text-align:center; padding:30px 0; color:var(--ink-soft); font-size:13.5px; }
+
+  .tabs{ display:flex; gap:8px; margin-bottom:16px; }
+  .tab-btn{
+    flex:1; padding:10px; border-radius:12px; border:1px solid var(--line); background:#fff;
+    font-family:inherit; font-weight:600; font-size:12.5px; color:var(--ink-soft); cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+  }
+  .tab-btn.active{ background:var(--burgundy-light); color:#fff; border-color:var(--burgundy-light); }
+  .tab-panel{ display:none; }
+  .tab-panel.active{ display:block; }
+
+  .card{ background:var(--card-bg); border:1px solid var(--line); border-radius:16px; padding:16px; margin-bottom:14px; }
+  .card h2{ font-size:15px; font-weight:700; margin:0 0 12px; display:flex; align-items:center; gap:6px; }
+  .card h2 .material-symbols-outlined{ color:var(--burgundy-light); font-size:18px; }
+
+  .field{ margin-bottom:10px; }
+  .field label{ display:block; font-size:11.5px; color:var(--ink-soft); margin-bottom:4px; }
+  .field input, .field select{
+    width:100%; padding:10px 11px; border:1px solid var(--line); border-radius:10px;
+    font-family:inherit; font-size:14px; background:var(--sheet-bg); color:var(--ink);
+  }
+  .add-btn{
+    width:100%; background:var(--burgundy-light); color:#fff; border:none; border-radius:10px;
+    padding:11px; font-family:inherit; font-weight:700; font-size:14px; cursor:pointer; margin-top:2px;
+    display:flex; align-items:center; justify-content:center; gap:5px;
+  }
+  .add-btn:active{ transform:scale(0.98); }
+  .add-btn:disabled{ opacity:0.6; }
+
+  .cat-title{ font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-soft); margin:14px 0 6px; }
+
+  .row{ display:flex; align-items:center; gap:8px; padding:10px 0; border-bottom:1px dashed var(--line); }
+  .row:last-child{ border-bottom:none; }
+  .row-label{ font-size:13.5px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .row-label.inactive{ color:var(--ink-soft); text-decoration:line-through; }
+  .row-sub{ font-size:11px; color:var(--ink-soft); }
+
+  .icon-btn{
+    width:30px; height:30px; border-radius:50%; border:none; background:var(--sheet-bg);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0; cursor:pointer; color:var(--ink-soft);
+  }
+  .icon-btn.edit{ color:var(--burgundy-light); }
+  .icon-btn .material-symbols-outlined{ font-size:16px; }
+
+  .toggle{
+    border:1px solid var(--line); border-radius:20px; padding:5px 11px; font-size:11.5px; font-weight:700;
+    cursor:pointer; background:#EFF7F3; color:var(--burgundy-light); flex-shrink:0; white-space:nowrap;
+  }
+  .toggle.off{ background:#F0EBE8; color:var(--ink-soft); }
+
+  .edit-row{ display:flex; flex-direction:column; gap:8px; padding:10px 0; border-bottom:1px dashed var(--line); }
+  .edit-row input, .edit-row select{
+    width:100%; padding:9px 10px; border:1px solid var(--burgundy-light); border-radius:9px;
+    font-family:inherit; font-size:13.5px; background:#fff;
+  }
+  .edit-actions{ display:flex; gap:8px; }
+  .edit-actions button{
+    flex:1; padding:8px; border-radius:8px; border:none; font-family:inherit; font-weight:700; font-size:12.5px; cursor:pointer;
+  }
+  .save-edit-btn{ background:var(--burgundy-light); color:#fff; }
+  .cancel-edit-btn{ background:var(--sheet-bg); color:var(--ink-soft); }
+
+  .toast{
+    position:fixed; top:16px; left:50%; transform:translateX(-50%) translateY(-140%);
+    padding:10px 18px; border-radius:9px; font-size:13px; font-weight:500;
+    transition:transform .3s ease; z-index:50; box-shadow:0 6px 18px rgba(0,0,0,0.18); max-width:88%; text-align:center;
+  }
+  .toast.show{ transform:translateX(-50%) translateY(0); }
+  .toast.ok{ background:var(--burgundy-dark); color:#fff; }
+  .toast.err{ background:var(--coral); color:#fff; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">หลังบ้าน · ผู้ดูแลระบบ</div>
+  <h1>จัดการระบบ</h1>
+</header>
+
+<main>
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="products"><span class="material-symbols-outlined">vaccines</span>สินค้า</button>
+    <button class="tab-btn" data-tab="categories"><span class="material-symbols-outlined">category</span>หมวดหมู่</button>
+    <button class="tab-btn" data-tab="staff"><span class="material-symbols-outlined">group</span>พนักงาน</button>
+  </div>
+
+  <!-- ===== สินค้า / หัตถการ ===== -->
+  <div class="tab-panel active" id="panel-products">
+    <div class="card">
+      <h2><span class="material-symbols-outlined">add_circle</span>เพิ่มหัตถการใหม่</h2>
+      <div class="field">
+        <label>ชื่อหัตถการ</label>
+        <input type="text" id="newTreatmentLabel" placeholder="เช่น Botox Innotox">
+      </div>
+      <div class="field">
+        <label>หมวดหมู่</label>
+        <select id="newTreatmentCategory"></select>
+      </div>
+      <button class="add-btn" id="addTreatmentBtn"><span class="material-symbols-outlined">add</span>เพิ่มหัตถการ</button>
+    </div>
+    <div class="card">
+      <h2><span class="material-symbols-outlined">list</span>รายการทั้งหมด</h2>
+      <div id="treatmentList"><div class="loading">กำลังโหลด...</div></div>
+    </div>
+  </div>
+
+  <!-- ===== หมวดหมู่ ===== -->
+  <div class="tab-panel" id="panel-categories">
+    <div class="card">
+      <h2><span class="material-symbols-outlined">add_circle</span>เพิ่มหมวดหมู่ใหม่</h2>
+      <div class="field">
+        <label>ชื่อหมวดหมู่</label>
+        <input type="text" id="newCategoryName" placeholder="เช่น IV Drip">
+      </div>
+      <button class="add-btn" id="addCategoryBtn"><span class="material-symbols-outlined">add</span>เพิ่มหมวดหมู่</button>
+    </div>
+    <div class="card">
+      <h2><span class="material-symbols-outlined">list</span>หมวดหมู่ทั้งหมด</h2>
+      <p style="font-size:12px;color:var(--ink-soft);margin:-6px 0 10px;">แก้ไขชื่อแล้ว หัตถการในหมวดนี้จะย้ายตามให้อัตโนมัติ</p>
+      <div id="categoryList"><div class="loading">กำลังโหลด...</div></div>
+    </div>
+  </div>
+
+  <!-- ===== พนักงาน ===== -->
+  <div class="tab-panel" id="panel-staff">
+    <div class="card">
+      <h2><span class="material-symbols-outlined">person_add</span>เพิ่มพนักงานใหม่</h2>
+      <div class="field">
+        <label>ชื่อพนักงาน</label>
+        <input type="text" id="newStaffName" placeholder="เช่น เจ้าหน้าที่ D">
+      </div>
+      <button class="add-btn" id="addStaffBtn"><span class="material-symbols-outlined">add</span>เพิ่มพนักงาน</button>
+    </div>
+    <div class="card">
+      <h2><span class="material-symbols-outlined">list</span>รายชื่อทั้งหมด</h2>
+      <div id="staffList"><div class="loading">กำลังโหลด...</div></div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const ACCESS_CODE = getAccessCode();
+if (!requireAccessCode()) throw new Error('no access code');
+const STATE = { staff: [], categories: [], treatments: [] };
+const editing = { staff: null, categories: null, treatments: null };
+
+function showToast(msg, ok){
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.className = 'toast show ' + (ok ? 'ok' : 'err');
+  setTimeout(() => { toast.className = 'toast ' + (ok ? 'ok' : 'err'); }, 2600);
+}
+
+// เรียก API แล้วคืน data ที่อยู่ใน res.data (โยน error ถ้า success=false)
+async function gsRun(action, params){
+  const res = await apiCall(action, params || {});
+  if (!res.success) throw new Error(res.error || 'เกิดข้อผิดพลาด');
+  return res.data;
+}
+
+// ---------- Tabs ----------
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ============================================================
+// สินค้า / หัตถการ
+// ============================================================
+
+function renderTreatmentCategoryOptions(){
+  const sel = document.getElementById('newTreatmentCategory');
+  sel.innerHTML = STATE.categories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+}
+
+function renderTreatments(){
+  const container = document.getElementById('treatmentList');
+  const cats = [...new Set(STATE.treatments.map(t => t.category))];
+
+  container.innerHTML = cats.map(cat => {
+    const items = STATE.treatments.filter(t => t.category === cat);
+    const rowsHtml = items.map(t => {
+      if (editing.treatments === t.id) {
+        const options = STATE.categories.map(c => `<option value="${c.name}" ${c.name === t.category ? 'selected' : ''}>${c.name}</option>`).join('');
+        return `
+          <div class="edit-row" data-id="${t.id}">
+            <input type="text" class="edit-label" value="${t.label}">
+            <select class="edit-category">${options}</select>
+            <div class="edit-actions">
+              <button class="save-edit-btn" data-save-treatment="${t.id}">บันทึก</button>
+              <button class="cancel-edit-btn" data-cancel-treatment>ยกเลิก</button>
+            </div>
+          </div>`;
+      }
+      return `
+        <div class="row">
+          <div class="row-label ${t.active ? '' : 'inactive'}">${t.label}</div>
+          <button class="icon-btn edit" data-edit-treatment="${t.id}"><span class="material-symbols-outlined">edit</span></button>
+          <div class="toggle ${t.active ? '' : 'off'}" data-toggle-treatment="${t.id}" data-active="${t.active}">
+            ${t.active ? 'ใช้งานอยู่' : 'ปิดใช้งาน'}
+          </div>
+        </div>`;
+    }).join('');
+    return `<div class="cat-title">${cat}</div>${rowsHtml}`;
+  }).join('');
+}
+
+document.getElementById('treatmentList').addEventListener('click', async (e) => {
+  const editBtn = e.target.closest('[data-edit-treatment]');
+  if (editBtn) { editing.treatments = editBtn.dataset.editTreatment; renderTreatments(); return; }
+
+  const cancelBtn = e.target.closest('[data-cancel-treatment]');
+  if (cancelBtn) { editing.treatments = null; renderTreatments(); return; }
+
+  const saveBtn = e.target.closest('[data-save-treatment]');
+  if (saveBtn) {
+    const row = saveBtn.closest('.edit-row');
+    const label = row.querySelector('.edit-label').value.trim();
+    const category = row.querySelector('.edit-category').value;
+    try {
+      STATE.treatments = await gsRun('updateTreatment', { id: saveBtn.dataset.saveTreatment, label: label, category: category });
+      editing.treatments = null;
+      renderTreatments();
+      showToast('แก้ไขหัตถการเรียบร้อย ✓', true);
+    } catch (err) { showToast('ผิดพลาด: ' + err.message, false); }
+    return;
+  }
+
+  const toggleBtn = e.target.closest('[data-toggle-treatment]');
+  if (toggleBtn) {
+    const id = toggleBtn.dataset.toggleTreatment;
+    const newActive = toggleBtn.dataset.active !== 'true';
+    try {
+      STATE.treatments = await gsRun('toggleTreatment', { id: id, active: newActive });
+      renderTreatments();
+      showToast('อัปเดตสถานะแล้ว', true);
+    } catch (err) { showToast('ผิดพลาด: ' + err.message, false); }
+  }
+});
+
+document.getElementById('addTreatmentBtn').addEventListener('click', async () => {
+  const label = document.getElementById('newTreatmentLabel').value.trim();
+  const category = document.getElementById('newTreatmentCategory').value;
+  if (!label) { showToast('กรุณาใส่ชื่อหัตถการ', false); return; }
+  const btn = document.getElementById('addTreatmentBtn');
+  btn.disabled = true;
+  try {
+    STATE.treatments = await gsRun('addTreatment', { label: label, category: category });
+    document.getElementById('newTreatmentLabel').value = '';
+    renderTreatments();
+    showToast('เพิ่มหัตถการเรียบร้อย ✓ จะเห็นในฟอร์มพนักงานทันที', true);
+  } catch (err) { showToast('ผิดพลาด: ' + err.message, false); }
+  btn.disabled = false;
+});
+
+// ============================================================
+// หมวดหมู่
+// ============================================================
+
+function renderCategories(){
+  const container = document.getElementById('categoryList');
+  container.innerHTML = STATE.categories.map(c => {
+    if (editing.categories === c.id) {
+      return `
+        <div class="edit-row" data-id="${c.id}">
+          <input type="text" class="edit-cat-name" value="${c.name}">
+          <div class="edit-actions">
+            <button class="save-edit-btn" data-save-category="${c.id}">บันทึก</button>
+            <button class="cancel-edit-btn" data-cancel-category>ยกเลิก</button>
+          </div>
+        </div>`;
+    }
+    const count = STATE.treatments.filter(t => t.category === c.name).length;
+    return `
+      <div class="row">
+        <div style="flex:1;min-width:0;">
+          <div class="row-label">${c.name}</div>
+          <div class="row-sub">${count} หัตถการ</div>
+        </div>
+        <button class="icon-btn edit" data-edit-category="${c.id}"><span class="material-symbols-outlined">edit</span></button>
+      </div>`;
+  }).join('');
+}
+
+document.getElementById('categoryList').addEventListener('click', async (e) => {
+  const editBtn = e.target.closest('[data-edit-category]');
+  if (editBtn) { editing.categories = editBtn.dataset.editCategory; renderCategories(); return; }
+
+  const cancelBtn = e.target.closest('[data-cancel-category]');
+  if (cancelBtn) { editing.categories = null; renderCategories(); return; }
+
+  const saveBtn = e.target.closest('[data-save-category]');
+  if (saveBtn) {
+    const row = saveBtn.closest('.edit-row');
+    const name = row.querySelector('.edit-cat-name').value.trim();
+    try {
+      STATE.categories = await gsRun('renameCategory', { id: saveBtn.dataset.saveCategory, name: name });
+      STATE.treatments = await gsRun('getAllTreatments'); // รีเฟรชเพราะหมวดของหัตถการอาจเปลี่ยนตาม
+      editing.categories = null;
+      renderCategories();
+      renderTreatments();
+      renderTreatmentCategoryOptions();
+      showToast('แก้ไขหมวดหมู่เรียบร้อย ✓', true);
+    } catch (err) { showToast('ผิดพลาด: ' + err.message, false); }
+  }
+});
+
+document.getElementById('addCategoryBtn').addEventListener('click', async () => {
+  const name = document.getElementById('newCategoryName').value.trim();
+  if (!name) { showToast('กรุณาใส่ชื่อหมวดหมู่', false); return; }
+  const btn = document.getElementById('addCategoryBtn');
+  btn.disabled = true;
+  try {
+    STATE.categories = await gsRun('addCategory', { name: name });
+    document.getElementById('newCategoryName').value = '';
+    renderCategories();
+    renderTreatmentCategoryOptions();
+    showToast('เพิ่มหมวดหมู่เรียบร้อย ✓', true);
+  } catch (err) { showToast('ผิดพลาด: ' + err.message, false); }
+  btn.disabled = false;
+});
+
+// ============================================================
+// พนักงาน
+// ============================================================
+
+function renderStaff(){
+  const container = document.getElementById('staffList');
+  container.innerHTML = STATE.staff.map(s => {
+    if (editing.staff === s.id) {
+      return `
+        <div class="edit-row" data-id="${s.id}">
+          <input type="text" class="edit-staff-name" value="${s.name}">
+          <div class="edit-actions">
+            <button class="save-edit-btn" data-save-staff="${s.id}">บันทึก</button>
+            <button class="cancel-edit-btn" data-cancel-staff>ยกเลิก</button>
+          </div>
+        </div>`;
+    }
+    return `
+      <div class="row">
+        <div class="row-label ${s.active ? '' : 'inactive'}">${s.name}</div>
+        <button class="icon-btn edit" data-edit-staff="${s.id}"><span class="material-symbols-outlined">edit</span></button>
+        <div class="toggle ${s.active ? '' : 'off'}" data-toggle-staff="${s.id}" data-active="${s.active}">
+          ${s.active ? 'ใช้งานอยู่' : 'ปิดใช้งาน'}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+document.getElementById('staffList').addEventListener('click', async (e) => {
+  const editBtn = e.target.closest('[data-edit-staff]');
+  if (editBtn) { editing.staff = editBtn.dataset.editStaff; renderStaff(); return; }
+
+  const cancelBtn = e.target.closest('[data-cancel-staff]');
+  if (cancelBtn) { editing.staff = null; renderStaff(); return; }
+
+  const saveBtn = e.target.closest('[data-save-staff]');
+  if (saveBtn) {
+    const row = saveBtn.closest('.edit-row');
+    const name = row.querySelector('.edit-staff-name').value.trim();
+    try {
+      STATE.staff = await gsRun('updateStaff', { id: saveBtn.dataset.saveStaff, name: name });
+      editing.staff = null;
+      renderStaff();
+      showToast('แก้ไขชื่อพนักงานเรียบร้อย ✓', true);
+    } catch (err) { showToast('ผิดพลาด: ' + err.message, false); }
+    return;
+  }
+
+  const toggleBtn = e.target.closest('[data-toggle-staff]');
+  if (toggleBtn) {
+    const id = toggleBtn.dataset.toggleStaff;
+    const newActive = toggleBtn.dataset.active !== 'true';
+    try {
+      STATE.staff = await gsRun('toggleStaff', { id: id, active: newActive });
+      renderStaff();
+      showToast('อัปเดตสถานะแล้ว', true);
+    } catch (err) { showToast('ผิดพลาด: ' + err.message, false); }
+  }
+});
+
+document.getElementById('addStaffBtn').addEventListener('click', async () => {
+  const name = document.getElementById('newStaffName').value.trim();
+  if (!name) { showToast('กรุณาใส่ชื่อพนักงาน', false); return; }
+  const btn = document.getElementById('addStaffBtn');
+  btn.disabled = true;
+  try {
+    STATE.staff = await gsRun('addStaff', { name: name });
+    document.getElementById('newStaffName').value = '';
+    renderStaff();
+    showToast('เพิ่มพนักงานเรียบร้อย ✓', true);
+  } catch (err) { showToast('ผิดพลาด: ' + err.message, false); }
+  btn.disabled = false;
+});
+
+// ============================================================
+// โหลดข้อมูลทั้งหมดตอนเปิดหน้า
+// ============================================================
+
+async function loadAll(){
+  try {
+    const [staff, categories, treatments] = await Promise.all([
+      gsRun('getAllStaff'),
+      gsRun('getAllCategories'),
+      gsRun('getAllTreatments')
+    ]);
+    STATE.staff = staff; STATE.categories = categories; STATE.treatments = treatments;
+    renderStaff(); renderCategories(); renderTreatments(); renderTreatmentCategoryOptions();
+  } catch (err) {
+    showToast('โหลดข้อมูลไม่สำเร็จ: ' + err.message, false);
+  }
+}
+
+loadAll();
+</script>
+</body>
+</html>
