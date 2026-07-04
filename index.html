@@ -86,6 +86,22 @@
   .line-input.has-value input{ color:var(--ink); }
   .line-input.has-value span.baht{ color:var(--burgundy-light); }
 
+  /* หลายเคสในหัตถการเดียว (ขยายแถวในตัว) */
+  .expand-btn{ width:26px; height:26px; border-radius:50%; border:none; background:#F1F2F3; color:var(--ink-soft); display:flex; align-items:center; justify-content:center; flex-shrink:0; cursor:pointer; }
+  .expand-btn .material-symbols-outlined{ font-size:15px; transition:transform .2s ease; }
+  .expand-btn.open{ background:#F1E9EC; color:var(--burgundy-light); }
+  .expand-btn.open .material-symbols-outlined{ transform:rotate(45deg); }
+  .case-badge{ font-size:9.5px; background:var(--coral); color:#fff; border-radius:7px; padding:1.5px 5px; font-weight:700; flex-shrink:0; }
+  .case-rows{ display:none; margin:8px 0 4px 38px; padding-top:9px; border-top:1px dashed #ECEDEF; }
+  .case-rows.open{ display:block; }
+  .case-row{ display:flex; align-items:center; gap:7px; margin-bottom:6px; }
+  .case-row .idx{ font-size:11.5px; color:var(--ink-soft); width:42px; flex-shrink:0; }
+  .case-row .line-input{ width:104px; }
+  .case-row .rm{ width:22px; height:22px; border-radius:50%; border:none; background:#F1E4E7; color:#B23A50; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; }
+  .case-row .rm .material-symbols-outlined{ font-size:12px; }
+  .add-case-btn{ display:flex; align-items:center; gap:4px; border:1.5px dashed #D9C3CB; border-radius:9px; padding:6px 11px; margin-top:2px; background:none; color:var(--burgundy-light); font-family:inherit; font-weight:600; font-size:11.5px; cursor:pointer; }
+  .subtotal-row{ display:flex; justify-content:space-between; margin-top:8px; padding-top:7px; border-top:1px solid #ECEDEF; font-size:12.5px; font-weight:700; color:var(--burgundy-light); }
+
   .recon-body{ padding:2px 16px 16px; }
   .recon-row{ display:flex; align-items:center; gap:12px; margin-bottom:10px; }
   .recon-row .line-input{ width:150px; }
@@ -481,8 +497,15 @@ function renderTreatments(){
       return `<div class="line">
         <div class="line-icon" style="background:${color}"><span class="material-symbols-outlined">vaccines</span></div>
         <div class="line-label">${label}</div>
+        <button type="button" class="expand-btn" data-expand-t="${id}" title="กรอกหลายเคส"><span class="material-symbols-outlined">add</span></button>
+        <span class="case-badge" id="badge_t_${id}" style="display:none;"></span>
         <div class="line-input" id="wrap_t_${id}"><span class="baht">฿</span>
           <input type="number" inputmode="decimal" placeholder="0" data-t="${id}" id="f_t_${id}"></div>
+      </div>
+      <div class="case-rows" id="caserows_t_${id}">
+        <div id="caselist_t_${id}"></div>
+        <button type="button" class="add-case-btn" data-addcase-t="${id}"><span class="material-symbols-outlined" style="font-size:13px;">add</span>เพิ่มเคส</button>
+        <div class="subtotal-row"><span id="subtotal-label_t_${id}">รวม 0 เคส</span><span id="subtotal_t_${id}">฿0</span></div>
       </div>`;
     }).join('');
     el.innerHTML = `<div class="group-head" data-toggle>
@@ -494,7 +517,79 @@ function renderTreatments(){
     container.appendChild(el);
   });
   bindToggles(container);
-  container.addEventListener('input', e => { if (e.target.tagName === 'INPUT') recalc(); });
+  bindTreatmentCaseEvents(container);
+  container.addEventListener('input', e => { if (e.target.tagName === 'INPUT' && e.target.dataset.caseT === undefined) recalc(); });
+}
+
+// ---------- หลายเคสในหัตถการเดียว (ขยายแถวในตัว) ----------
+const treatmentCases = {}; // id -> [amount1, amount2, ...] (มีแค่ตอนเปิดโหมดหลายเคส)
+
+function toggleTreatmentExpand(id){
+  const btn = document.querySelector(`[data-expand-t="${id}"]`);
+  const rows = document.getElementById(`caserows_t_${id}`);
+  const field = document.getElementById(`f_t_${id}`);
+  const isOpen = rows.classList.toggle('open');
+  btn.classList.toggle('open', isOpen);
+  if (isOpen) {
+    if (!treatmentCases[id]) {
+      const current = parseFloat(field.value) || 0;
+      treatmentCases[id] = current > 0 ? [current] : [0];
+    }
+    renderTreatmentCases(id);
+    field.readOnly = true;
+  } else {
+    field.readOnly = false;
+  }
+}
+
+function renderTreatmentCases(id){
+  const list = treatmentCases[id] || [];
+  const el = document.getElementById(`caselist_t_${id}`);
+  el.innerHTML = list.map((amt,i) => `
+    <div class="case-row">
+      <span class="idx">เคส ${i+1}</span>
+      <div class="line-input has-value"><span class="baht">฿</span><input type="number" inputmode="decimal" value="${amt||''}" data-case-t="${id}" data-idx="${i}"></div>
+      <button type="button" class="rm" data-rmcase-t="${id}" data-idx="${i}"><span class="material-symbols-outlined">close</span></button>
+    </div>`).join('');
+  updateTreatmentCaseTotals(id);
+}
+
+// อัปเดตแค่ยอดรวม/ป้าย/ช่องหลัก โดยไม่แตะ DOM ของช่องกรอกแต่ละเคส
+// (สำคัญ: ถ้าไปสร้าง input ใหม่ทับของเดิมตอนพิมพ์อยู่ โฟกัสจะหลุด คีย์บอร์ดจะปิดเอง)
+function updateTreatmentCaseTotals(id){
+  const list = treatmentCases[id] || [];
+  const total = list.reduce((s,a)=>s+(a||0),0);
+  document.getElementById(`subtotal_t_${id}`).textContent = '฿' + fmt(total);
+  document.getElementById(`subtotal-label_t_${id}`).textContent = 'รวม ' + list.length + ' เคส';
+  const field = document.getElementById(`f_t_${id}`);
+  field.value = total || '';
+  const badge = document.getElementById(`badge_t_${id}`);
+  if (list.length > 1) { badge.style.display = 'inline-block'; badge.textContent = '×' + list.length; }
+  else badge.style.display = 'none';
+  recalc();
+}
+
+function bindTreatmentCaseEvents(container){
+  container.addEventListener('click', e => {
+    const expBtn = e.target.closest('[data-expand-t]');
+    if (expBtn) { toggleTreatmentExpand(expBtn.dataset.expandT); return; }
+    const addBtn = e.target.closest('[data-addcase-t]');
+    if (addBtn) { const id = addBtn.dataset.addcaseT; treatmentCases[id].push(0); renderTreatmentCases(id); return; }
+    const rmBtn = e.target.closest('[data-rmcase-t]');
+    if (rmBtn) {
+      const id = rmBtn.dataset.rmcaseT; const idx = parseInt(rmBtn.dataset.idx);
+      treatmentCases[id].splice(idx, 1);
+      if (treatmentCases[id].length === 0) treatmentCases[id] = [0];
+      renderTreatmentCases(id);
+    }
+  });
+  container.addEventListener('input', e => {
+    if (e.target.dataset.caseT !== undefined) {
+      const id = e.target.dataset.caseT; const idx = parseInt(e.target.dataset.idx);
+      treatmentCases[id][idx] = parseFloat(e.target.value) || 0;
+      updateTreatmentCaseTotals(id); // แค่อัปเดตยอดรวม ไม่รื้อ DOM ช่องที่กำลังพิมพ์อยู่
+    }
+  });
 }
 
 function renderPayment(){
