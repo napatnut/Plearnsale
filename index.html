@@ -78,6 +78,10 @@
   .line-input span.baht{ font-size:12.5px; color:var(--ink-soft); }
   .line-input input{ border:none; background:none; width:100%; text-align:right; font-family:inherit; font-size:14.5px; font-weight:600; font-variant-numeric:tabular-nums; color:var(--ink-soft); }
   .line-input input:focus{ outline:none; }
+  /* เอาปุ่มลูกศรขึ้น-ลงของ input number ออก เพราะทำให้ตัวเลขเลื่อนเองโดยไม่ตั้งใจ (คลิกโดน/scroll ผ่าน) */
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+  input[type="number"]{ -moz-appearance:textfield; appearance:textfield; }
   .line-input.has-value{ background:#fff; border:1.5px solid var(--burgundy-light); }
   .line-input.has-value input{ color:var(--ink); }
   .line-input.has-value span.baht{ color:var(--burgundy-light); }
@@ -243,7 +247,7 @@
   </div>
 
   <div class="eyebrow" id="pageEyebrow">บันทึกยอดรายวัน · หัตถการ</div>
-  <div class="clinic-name">Pearn Skin Clinic</div>
+  <div class="clinic-name">Plearn Skin Clinic</div>
 
   <div class="meta-row">
     <div class="meta-pill">
@@ -384,7 +388,7 @@
     <div class="popup-scroll">
       <div class="share-card" id="shareCard">
         <div class="sc-eyebrow">DAILY REPORT</div>
-        <div class="sc-clinic">Pearn Skin Clinic</div>
+        <div class="sc-clinic">Plearn Skin Clinic</div>
         <div class="sc-date" id="scDate">—</div>
         <div class="sc-total-label">ยอดรวมวันนี้ (หัตถการ)</div>
         <div class="sc-total">฿<span id="scTotal">0</span></div>
@@ -430,6 +434,13 @@
 <script>
 const ACCESS_CODE = getAccessCode();
 if (!requireAccessCode()) throw new Error('no access code');
+
+// กัน Chrome เปลี่ยนค่าตัวเลขเองตอนเลื่อนหน้าจอผ่านช่องกรอกที่ focus อยู่
+document.addEventListener('wheel', () => {
+  if (document.activeElement && document.activeElement.type === 'number') {
+    document.activeElement.blur();
+  }
+}, { passive: true });
 
 const ITEM_COLORS = [
   "linear-gradient(135deg,#5B8FD6,#2D5A8C)","linear-gradient(135deg,#E15B7A,#B23A50)",
@@ -848,7 +859,7 @@ document.getElementById('shareBtn').addEventListener('click', async () => {
     let shared = false;
     if (navigator.share) {
       try {
-        await navigator.share({ files: [file], title: 'สรุปยอดวันนี้ - Pearn Skin Clinic' });
+        await navigator.share({ files: [file], title: 'สรุปยอดวันนี้ - Plearn Skin Clinic' });
         shared = true;
       } catch (shareErr) {
         if (shareErr.name === 'AbortError') { shareBtn.disabled = false; return; } // ผู้ใช้กดยกเลิกเอง ไม่ต้องแจ้งเตือน
